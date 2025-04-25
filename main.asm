@@ -436,7 +436,76 @@ Modify:
     
     
 Delete:
-    lea dx, Entername
+    lea dx, requestname
+    mov ah, 09h
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, Buffer
+    mov ah, 0Ah 
+    int 21h 
+    lea si, Buffer
+    add si, 2
+    mov dx, si
+    lea bx, order
+    xor cx, cx    
+    mov cl, Taken
+    Looking_loop_delete:
+        mov si, dx       
+        mov di, [bx]
+        push cx
+        mov cl, [Buffer + 1] 
+        mov ch, 0
+        repe cmpsb
+        pop cx
+        je found_delete
+        add bx, 2
+        loop Looking_loop_delete
+        jmp notfound_delete
+    found_delete:
+        mov di,[bx]
+        push di
+        lea si, Names[di]
+        mov cx, 11
+        reset_names:
+            mov byte ptr [si], '$'
+            inc si
+            loop reset_names
+          
+        pop di
+        push di
+        lea si, Contacts[di]
+        mov cx, 11           
+        reset_contacts:
+            mov byte ptr [si], '$'
+            inc si
+            loop reset_contacts
+
+        pop di
+        push bx
+        again_delete:
+            mov si, [bx + 2]
+            mov [bx], si
+            add bx, 2
+            cmp bx, offset order + 32  ; 16 entries * 2 bytes each
+            jge done_delete
+            jmp again_delete
+        done_delete:
+        dec Taken            
+        jmp done_search_delete    
+        
+    notfound_delete:
+        lea dx, contactnotfound
+        mov ah, 09h
+        int 21h
+    done_search_delete:
+    lea dx, pkey
+    mov ah, 09h
+    int 21h
+
+    mov ah, 01h
+    int 21h
     jmp dispmenu
 Exit:
     lea dx, Entername
