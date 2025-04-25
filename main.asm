@@ -271,8 +271,81 @@ viewcontacts:
     
     
 Search:
-    lea dx, Entername
+    lea dx, requestname
+    mov ah, 09h
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, Buffer
+    mov ah, 0Ah 
+    int 21h 
+    lea si, Buffer
+    add si, 2
+    mov dx, si
+    lea bx, order
+    xor cx, cx    
+    mov cl, Taken
+    Looking_loop:
+        mov si, dx       
+        mov di, [bx]
+        push cx
+        mov cl, [Buffer + 1]
+        mov ch, 0
+        repe cmpsb
+        pop cx
+        je found
+        add bx, 2
+        loop Looking_loop
+        jmp notfound
+    found:
+        mov di,[bx]
+        lea dx, contactfound
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, contactname
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h 
+        lea dx, Names[di]
+        mov ah, 09h
+        int 21h            
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, contactnumber
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, Contacts[di]
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        jmp done_search
+    notfound:
+        lea dx, contactnotfound
+        mov ah, 09h
+        int 21h
+    done_search:
+    lea dx, pkey
+    mov ah, 09h
+    int 21h
+
+    mov ah, 01h
+    int 21h
     jmp dispmenu
+    
+    
+    
 Modify:
     lea dx, Entername
     jmp dispmenu
