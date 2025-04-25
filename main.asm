@@ -441,6 +441,13 @@ Modify:
     
     
 Delete:
+    cmp Taken, 0
+    jne notempty
+    lea dx, emptyviewmsg
+    mov ah, 09h
+    int 21h 
+    jmp done_search_delete
+    notempty:
     lea dx, requestname
     mov ah, 09h
     int 21h
