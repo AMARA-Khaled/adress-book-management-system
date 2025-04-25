@@ -347,8 +347,94 @@ Search:
     
     
 Modify:
-    lea dx, Entername
+    lea dx, requestname
+    mov ah, 09h
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, Buffer
+    mov ah, 0Ah 
+    int 21h 
+    lea si, Buffer
+    add si, 2
+    mov dx, si
+    lea bx, order
+    xor cx, cx    
+    mov cl, Taken
+    Looking_loop_modify:
+        mov si, dx       
+        mov di, [bx]
+        push cx
+        mov cl, [Buffer + 1] 
+        mov ch, 0
+        repe cmpsb
+        pop cx
+        je found_modify
+        add bx, 2
+        loop Looking_loop_modify
+        jmp notfound_modify
+    found_modify:
+            
+        mov di,[bx]
+        lea dx, contactfound
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        
+        ; Reset the memory slot with $
+        push di
+        lea si, Contacts[di]
+        mov cx, 11
+        reset_slot:
+            mov byte ptr [si], '$'
+            inc si
+            loop reset_slot
+            
+        pop di
+        lea dx, newphonenumber
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9
+        int 21h
+        
+        lea dx, Buffer
+        mov ah, 0Ah 
+        int 21h
+        
+        mov cl, [Buffer + 1]
+        mov ch, 0
+        lea si, Buffer
+        add si, 2
+        lea di, Contacts[di]
+        rep movsb
+        
+        lea dx, newline
+        mov ah, 9
+        int 21h
+        lea dx, phoneadded             
+        mov ah, 09h  
+        int 21h
+        jmp done_search_modify
+    notfound_modify:
+        lea dx, contactnotfound
+        mov ah, 09h
+        int 21h
+    done_search_modify:
+    lea dx, pkey
+    mov ah, 09h
+    int 21h
+
+    mov ah, 01h
+    int 21h
     jmp dispmenu
+    
+    
+    
+    
 Delete:
     lea dx, Entername
     jmp dispmenu
