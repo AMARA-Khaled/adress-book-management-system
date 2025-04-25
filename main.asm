@@ -91,8 +91,185 @@ full:
     int 21h
     jmp end
 adding: 
-    lea dx, Entername
+    mov ax, ds
+    mov es, ax
+    lea dx, Entername        
+    mov ah, 9  
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, Buffer
+    mov ah, 0Ah 
+    int 21h
+    mov si, dx
+    mov cl,byte ptr [si + 1]
+    mov ch, 0 
+    mov di, dx
+    add di, 2
+    convert_loop:
+        mov al, [di]
+        cmp al, 'A'
+        jl skip
+        cmp al, 'Z'
+        jg skip
+        add al, 32               
+        mov [di], al
+    skip:
+        inc di
+        loop convert_loop
+    mov ax, si
+    xor cx, cx
+    mov cl, [si + 1]
+    mov di, bx
+    add si, 2
+    rep movsb
+    mov si, ax
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, nameadded
+    mov ah, 9 
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h 
+    lea dx, Enterphone
+    mov ah, 9  
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, Buffer
+    mov ah, 0Ah 
+    int 21h
+    mov ax, si 
+    xor cx, cx
+    mov cl, [si + 1]
+    mov di, bx
+    add di, 176
+    add si, 2
+    rep movsb
+    mov si, ax
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, phoneadded
+    mov ah, 9 
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h 
+    
+    lea di, order
+    mov si, bx
+    mov cl, Taken
+    cmp cl, 0
+    je empty
+    getplace_loop:
+        mov ax, si
+        mov dx, di
+        mov di,[di]
+        push cx
+        mov cl, [si]
+        mov ch, [di]
+        cmp cl, ch
+        pop cx
+        jl insert
+        mov si, ax
+        mov di, dx
+        add di, 2
+        dec cl
+        cmp cl, 0
+        jle insertend
+        jmp getplace_loop
+    insert:
+        mov si, ax
+        mov di, dx
+        inc Taken
+    again:    
+        mov ax, [di]
+        mov [di], si
+        mov si, ax
+        add di, 2
+        cmp di, 384
+        jl again
+        jmp endadd
+    empty:
+        mov order ,bx
+        inc Taken    
+        jmp endadd
+    insertend:
+        mov [di],si
+        inc Taken
+        jmp endadd     
+    endadd:
+        lea dx, pkey
+        mov ah, 09h
+        int 21h
+    
+        mov ah, 01h
+        int 21h     
+            
+       
     jmp dispmenu
+viewcontacts:
+    cmp Taken, 0
+    jle emptyview
+    lea si, order
+    xor cx, cx
+    mov cl, Taken
+    order_loop:
+        mov di, [si]
+        lea dx, contactname
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h 
+        lea dx, Names[di]
+        mov ah, 09h
+        int 21h            
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, contactnumber   
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, Contacts[di]
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, seperator
+        mov ah, 09h
+        int 21h
+        add si, 2
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        loop order_loop
+        jmp viewend
+    emptyview:
+        lea dx, emptyviewmsg
+        mov ah, 09h
+        int 21h
+    viewend:
+    lea dx, pkey
+    mov ah, 09h
+    int 21h
+
+    mov ah, 01h
+    int 21h
+    jmp dispmenu
+    
+    
+    
+    
 Search:
     lea dx, Entername
     jmp dispmenu
