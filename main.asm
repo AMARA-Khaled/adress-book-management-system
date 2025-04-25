@@ -11,7 +11,8 @@ data segment
          db "3. Search a contact.",13,10
          db "4. Modify a contact.",13,10
          db "5. Delete a Contact.",13,10
-         db "6. Exit.",13,10
+         db "6. About",13,10
+         db "7. Exit.",13,10
          db "Enter your choice (1-6): $"
     newline db 13,10,"$"
     Entername db "Enter the name (up to 10 characters):$"
@@ -29,6 +30,8 @@ data segment
     pkey db 13,10,"Press any key...$"
     msg_invalid db "invalide choice. $"
     fullspace db "No space, please delete some contacts before adding a new one. $"
+    msgabout db "Designed & Coded By : AMARA KHALED WALID",13,10,07,07
+             db "Supervised by: Ms. MILI Saoussen & ZOUANA SEYF EDDINE$",13,10
 ends
 
 stack segment
@@ -67,6 +70,8 @@ start:
     cmp bl, '5'
     je Delete
     cmp bl, '6'
+    je About
+    cmp bl, '7'
     je Exit
 
     ; if none matched, show invalid
@@ -507,10 +512,30 @@ Delete:
     mov ah, 01h
     int 21h
     jmp dispmenu
+About:
+    mov ah, 06h    
+    mov al, 0       
+    mov bh, 07h     
+    mov cx, 0000h   
+    mov dx, 184Fh   
+    int 10h         
+    
+    lea dx, msgabout
+    mov ah, 09h
+    int 21h
+        
+    lea dx, pkey
+    mov ah, 09h
+    int 21h
+
+    mov ah, 01h
+    int 21h
+    jmp dispmenu
+    
+    
 Exit:
     lea dx, Entername
-    jmp end
-jmp dispmenu 
+    jmp end 
 end:  
             
     lea dx, pkey
