@@ -3,7 +3,9 @@ data segment
     Names dB 176 dup("$")
     Contacts db 176 dup ("$")
     order dw 16 dup(?)
-    Taken db 0
+    Taken db 0 
+    FoundPrefix db 0
+    Placement db 0
     Buffer db 11,12 dup(?)
     menu db 13,10,03,32,"Choose an option:",32,03,13,10
          db "1. Add a contact.",13,10
@@ -11,8 +13,10 @@ data segment
          db "3. Search a contact.",13,10
          db "4. Modify a contact.",13,10
          db "5. Delete a Contact.",13,10
-         db "6. About",13,10
-         db "7. Exit.",13,10
+         db "6. View with prefix-Name",13,10
+         db "7. View with prefix-Number",13,10
+         db "8. About",13,10
+         db "9. Exit.",13,10
          db "Enter your choice (1-6): $"
     newline db 13,10,"$"
     Entername db "Enter the name (up to 10 characters):$"
@@ -21,8 +25,11 @@ data segment
     Phoneadded db "Phone number added successfully.$"
     contactname db "Name: $"
     contactnumber db "Phone Number: $"
+    phonelength_error db "Phone number must be exactly 10 digits!$"
     seperator db "===============$"
     requestname db "Please type in the name of the contact you're looking for: $"
+    requestprefixname db "Please type in the prefix of the name of the contact you're looking for: $"
+    requestprefixnumber db "Please type in the digit sequence in contact you're looking for: $"
     emptyviewmsg db "No Contacts saved!$"
     contactnotfound db "No Contact with the provided Name$"
     contactfound db "Contact found!$"
@@ -70,8 +77,12 @@ start:
     cmp bl, '5'
     je Delete
     cmp bl, '6'
-    je About
+    je PrefixName
     cmp bl, '7'
+    je PrefixNumber
+    cmp bl, '8'
+    je About
+    cmp bl, '9'
     je Exit
 
     ; if none matched, show invalid
@@ -519,6 +530,225 @@ Delete:
     mov ah, 01h
     int 21h
     jmp dispmenu
+    
+    
+PrefixName:
+    lea si, Buffer
+    mov cx, 12
+    inc si
+    clear_buffer_loop:
+        mov byte ptr [si], "$"
+        inc si
+        loop clear_buffer_loop
+    lea dx, requestprefixname
+    mov ah, 09h
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, Buffer
+    mov ah, 0Ah 
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h 
+    lea si, Buffer
+    add si, 2
+    mov dx, si
+    lea bx, order
+    xor cx, cx    
+    mov cl, Taken
+    mov FoundPrefix, 0h
+    Looking_loop_prefix:
+        mov si, dx       
+        mov di, [bx]
+        push cx
+        mov cl, [Buffer + 1]
+        mov ch, 0
+        repe cmpsb
+        pop cx 
+        dec di
+        dec si 
+        mov ax, [si]
+        cmp al, [di]
+        jne next_prefix
+        cmp [si+1], 13
+        je found_prefix
+    next_prefix:
+        add bx, 2 
+        loop Looking_loop_prefix
+        cmp FoundPrefix, 0
+        je notfound_prefix
+        jmp done_search_prefix
+    found_prefix:
+        inc FoundPrefix
+        mov di,[bx]
+        lea dx, seperator
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, contactname
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h 
+        lea dx, Names[di]
+        mov ah, 09h
+        int 21h            
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, contactnumber
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, Contacts[di]
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        add bx, 2 
+        cmp cl, 1
+        je done_search_prefix
+        dec cl
+        jmp looking_loop_prefix
+    notfound_prefix:
+        lea dx, contactnotfound
+        mov ah, 09h
+        int 21h
+    done_search_prefix:
+    lea dx, pkey
+    mov ah, 09h
+    int 21h
+
+    mov ah, 01h
+    int 21h
+    jmp dispmenu        
+    
+            
+            
+            
+PrefixNumber:
+    lea si, Buffer
+    mov cx, 12
+    inc si
+    clear_buffer_loop_number:
+        mov byte ptr [si], "$"
+        inc si
+        loop clear_buffer_loop_number
+    lea dx, requestprefixnumber
+    mov ah, 09h
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h
+    lea dx, Buffer
+    mov ah, 0Ah 
+    int 21h
+    lea dx, newline
+    mov ah, 9  
+    int 21h 
+    lea si, Buffer
+    add si, 2
+    mov dx, si
+    lea bx, order
+    xor cx, cx    
+    mov cl, Taken
+    mov FoundPrefix, 0h
+    Looking_loop_number:
+        mov byte ptr Placement, 1
+        mov si, dx       
+        mov di, [bx]
+        lea di, Contacts[di]
+    again_number:
+            push cx
+            mov cl, [Buffer + 1]
+            mov ch, 0
+            repe cmpsb
+            pop cx
+            dec di
+            dec si 
+            mov ax, [si]
+            cmp al, [di]
+            jne next_place    
+            cmp [si+1], 13
+            je found_number
+    next_place:
+            mov si, dx
+            mov di, [bx]
+            lea di, Contacts[di]
+            xor ax, ax
+            mov al, Placement
+            add di, ax
+            inc Placement
+            cmp Placement, 10
+            jne again_number
+        add bx, 2 
+        loop Looking_loop_number
+        cmp FoundPrefix, 0
+        je notfound_number
+        jmp done_search_number
+    found_number:
+        inc FoundPrefix
+        mov di,[bx]
+        lea dx, seperator
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, contactname
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h 
+        lea dx, Names[di]
+        mov ah, 09h
+        int 21h            
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, contactnumber
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        lea dx, Contacts[di]
+        mov ah, 09h
+        int 21h
+        lea dx, newline
+        mov ah, 9  
+        int 21h
+        add bx, 2 
+        cmp cl, 1
+        je done_search_number
+        dec cl
+        jmp looking_loop_number
+    notfound_number:
+        lea dx, contactnotfound
+        mov ah, 09h
+        int 21h
+    done_search_number:
+    lea dx, pkey
+    mov ah, 09h
+    int 21h
+
+    mov ah, 01h
+    int 21h
+    jmp dispmenu 
+
+
+
+    
+    
 About:
     mov ah, 06h    
     mov al, 0       
